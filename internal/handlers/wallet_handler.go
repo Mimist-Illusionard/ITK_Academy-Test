@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	enums "itk-academy-test/internal"
+	"itk-academy-test/internal/dto"
+	"itk-academy-test/internal/models"
 	"itk-academy-test/internal/services"
 	"net/http"
 	"strconv"
@@ -22,6 +25,7 @@ func New(s *services.WalletService) *WalletHandler {
 
 func (h *WalletHandler) Initialize(ginEngine *gin.Engine) {
 	ginEngine.POST("/wallets/", h.Create)
+	ginEngine.POST("/wallet/", h.Operation)
 	ginEngine.GET("/wallets/", h.AllWallets)
 	ginEngine.GET("/wallets/:id", h.Amount)
 	ginEngine.DELETE("/wallets/:id", h.Delete)
@@ -72,13 +76,28 @@ func (h *WalletHandler) Delete(c *gin.Context) {
 }
 
 func (h *WalletHandler) Operation(c *gin.Context) {
-	posts, err := h.Service.AllWallets()
+	var request dto.WalletOperationRequest
+
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not get wallets"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, posts)
+	wallet := &models.Wallet{}
+	wallet, err = h.Service.Operation(request.WalletID, enums.OperationType(request.OperationType), request.Amount)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	response := dto.WalletResponse{
+		WalletID: wallet.ID,
+		Balance:  wallet.Balance,
+		Message:  "Operation completed successfully",
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // JUST FOR TESTING
