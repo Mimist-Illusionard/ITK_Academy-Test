@@ -5,6 +5,8 @@ import (
 	enums "itk-academy-test/internal"
 	"itk-academy-test/internal/models"
 	"itk-academy-test/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type WalletService struct {
@@ -26,11 +28,11 @@ func (s *WalletService) Create() (models.Wallet, error) {
 	return wallet, nil
 }
 
-func (s *WalletService) Delete(id uint) error {
+func (s *WalletService) Delete(id uuid.UUID) error {
 	return s.repo.Delete(id)
 }
 
-func (s *WalletService) Amount(id uint) (int, error) {
+func (s *WalletService) Amount(id uuid.UUID) (int, error) {
 
 	wallet, err := s.repo.Get(id)
 	if err != nil {
@@ -40,7 +42,7 @@ func (s *WalletService) Amount(id uint) (int, error) {
 	return wallet.Balance, nil
 }
 
-func (s *WalletService) Operation(id uint, operationType enums.OperationType, amount int) (*models.Wallet, error) {
+func (s *WalletService) Operation(id uuid.UUID, operationType enums.OperationType, amount int) (*models.Wallet, error) {
 
 	wallet, err := s.repo.Get(id)
 	if err != nil {

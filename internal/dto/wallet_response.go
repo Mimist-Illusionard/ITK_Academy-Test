@@ -1,7 +1,9 @@
 package dto
 
+import "github.com/google/uuid"
+
 type WalletResponse struct {
-	WalletID uint   `json:"walletId"`
-	Balance  int    `json:"balance"`
-	Message  string `json:"message,omitempty"`
+	WalletID uuid.UUID `json:"walletId"`
+	Balance  int       `json:"balance"`
+	Message  string    `json:"message,omitempty"`
 }

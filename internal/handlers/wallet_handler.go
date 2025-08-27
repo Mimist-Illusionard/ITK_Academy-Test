@@ -6,9 +6,9 @@ import (
 	"itk-academy-test/internal/models"
 	"itk-academy-test/internal/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type Handler interface {
@@ -24,11 +24,14 @@ func New(s *services.WalletService) *WalletHandler {
 }
 
 func (h *WalletHandler) Initialize(ginEngine *gin.Engine) {
-	ginEngine.POST("/wallets/", h.Create)
-	ginEngine.POST("/wallet/", h.Operation)
-	ginEngine.GET("/wallets/", h.AllWallets)
-	ginEngine.GET("/wallets/:id", h.Amount)
-	ginEngine.DELETE("/wallets/:id", h.Delete)
+	v1 := ginEngine.Group("/api/v1")
+	{
+		v1.POST("/wallets/", h.Create)
+		v1.POST("/wallet/", h.Operation)
+		v1.GET("/wallets/", h.AllWallets)
+		v1.GET("/wallets/:id", h.Amount)
+		v1.DELETE("/wallets/:id", h.Delete)
+	}
 }
 
 func (h *WalletHandler) Create(c *gin.Context) {
@@ -48,20 +51,20 @@ func (h *WalletHandler) Create(c *gin.Context) {
 
 func (h *WalletHandler) Amount(c *gin.Context) {
 	id := c.Param("id")
-	walletId, err := strconv.Atoi(id)
+	walletId, err := uuid.Parse(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid wallet ID", "detail": err.Error()})
 		return
 	}
 
-	amount, err := h.Service.Amount(uint(walletId))
+	amount, err := h.Service.Amount(walletId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "There is error with gettint wallet amount", "detail": err.Error()})
 		return
 	}
 
 	response := dto.WalletResponse{
-		WalletID: uint(walletId),
+		WalletID: walletId,
 		Balance:  amount,
 		Message:  "",
 	}
@@ -72,13 +75,13 @@ func (h *WalletHandler) Amount(c *gin.Context) {
 func (h *WalletHandler) Delete(c *gin.Context) {
 
 	id := c.Param("id")
-	walletId, err := strconv.Atoi(id)
+	walletId, err := uuid.Parse(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid wallet ID", "detail": err.Error()})
 		return
 	}
 
-	err = h.Service.Delete(uint(walletId))
+	err = h.Service.Delete(walletId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "There is error with deleting wallet", "detail": err.Error()})
 		return

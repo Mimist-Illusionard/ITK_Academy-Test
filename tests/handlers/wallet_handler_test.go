@@ -76,7 +76,7 @@ func TestCreateWallet(t *testing.T) {
 	r := newRouter(t)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/wallets/", nil)
+	req, _ := http.NewRequest("POST", "/api/v1/wallets/", nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -93,7 +93,7 @@ func TestAmount(t *testing.T) {
 	r := newRouter(t)
 
 	w1 := httptest.NewRecorder()
-	req1, _ := http.NewRequest("POST", "/wallets/", nil)
+	req1, _ := http.NewRequest("POST", "/api/v1/wallets/", nil)
 	r.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusOK, w1.Code)
 
@@ -109,13 +109,13 @@ func TestAmount(t *testing.T) {
 		Amount:        150,
 	})
 	w2 := httptest.NewRecorder()
-	req2, _ := http.NewRequest("POST", "/wallet/", bytes.NewReader(opBody))
+	req2, _ := http.NewRequest("POST", "/api/v1/wallet/", bytes.NewReader(opBody))
 	req2.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w2, req2)
 	assert.Equal(t, http.StatusOK, w2.Code)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/wallets/"+fmt.Sprint(created.WalletID), nil)
+	req, _ := http.NewRequest("GET", "/api/v1/wallets/"+fmt.Sprint(created.WalletID), nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -133,7 +133,7 @@ func TestOperation_Deposit(t *testing.T) {
 	r := newRouter(t)
 
 	w1 := httptest.NewRecorder()
-	req1, _ := http.NewRequest("POST", "/wallets/", nil)
+	req1, _ := http.NewRequest("POST", "/api/v1/wallets/", nil)
 	r.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusOK, w1.Code)
 
@@ -146,7 +146,7 @@ func TestOperation_Deposit(t *testing.T) {
 		Amount:        200,
 	})
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/wallet/", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", "/api/v1/wallet/", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
 
@@ -163,7 +163,7 @@ func TestOperation_Withdraw_Insufficient(t *testing.T) {
 	r := newRouter(t)
 
 	w1 := httptest.NewRecorder()
-	req1, _ := http.NewRequest("POST", "/wallets/", nil)
+	req1, _ := http.NewRequest("POST", "/api/v1/wallets/", nil)
 	r.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusOK, w1.Code)
 
@@ -176,7 +176,7 @@ func TestOperation_Withdraw_Insufficient(t *testing.T) {
 		Amount:        50,
 	})
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/wallet/", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", "/api/v1/wallet/", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
 
@@ -188,7 +188,7 @@ func TestDeleteWallet(t *testing.T) {
 	r := newRouter(t)
 
 	w1 := httptest.NewRecorder()
-	req1, _ := http.NewRequest("POST", "/wallets/", nil)
+	req1, _ := http.NewRequest("POST", "/api/v1/wallets/", nil)
 	r.ServeHTTP(w1, req1)
 	assert.Equal(t, http.StatusOK, w1.Code)
 
@@ -196,7 +196,7 @@ func TestDeleteWallet(t *testing.T) {
 	_ = json.Unmarshal(w1.Body.Bytes(), &created)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/wallets/"+fmt.Sprint(created.WalletID), nil)
+	req, _ := http.NewRequest("DELETE", "/api/v1/wallets/"+fmt.Sprint(created.WalletID), nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)

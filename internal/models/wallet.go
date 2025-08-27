@@ -1,6 +1,8 @@
 package models
 
+import "github.com/google/uuid"
+
 type Wallet struct {
-	ID      uint `gorm:"primary_key;autoIncrement" json:"id"`
-	Balance int  `gorm:"not null;default:0" json:"balance"`
+	ID      uuid.UUID `gorm:"type:uuid;primaryKey"`
+	Balance int       `gorm:"not null;default:0" json:"balance"`
 }
