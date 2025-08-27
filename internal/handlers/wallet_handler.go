@@ -60,7 +60,6 @@ func (h *WalletHandler) Amount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"amount": amount})
 	response := dto.WalletResponse{
 		WalletID: uint(walletId),
 		Balance:  amount,
