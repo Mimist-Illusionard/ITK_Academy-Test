@@ -37,7 +37,13 @@ func (h *WalletHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't create wallet", "detail": err.Error()})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Wallet created", "wallet": wallet})
+	response := dto.WalletResponse{
+		WalletID: wallet.ID,
+		Balance:  wallet.Balance,
+		Message:  "Wallet created",
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *WalletHandler) Amount(c *gin.Context) {
@@ -55,6 +61,13 @@ func (h *WalletHandler) Amount(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"amount": amount})
+	response := dto.WalletResponse{
+		WalletID: uint(walletId),
+		Balance:  amount,
+		Message:  "",
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *WalletHandler) Delete(c *gin.Context) {
