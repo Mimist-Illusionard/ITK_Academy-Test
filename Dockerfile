@@ -15,7 +15,7 @@ WORKDIR /root/
 
 COPY --from=builder /app/main .
 
-COPY --from=builder /app/cmd/config.env .env
+COPY --from=builder /app/cmd/config.env config.env
 
 EXPOSE 9090
 
