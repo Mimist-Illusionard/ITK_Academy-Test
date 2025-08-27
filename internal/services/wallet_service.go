@@ -42,28 +42,25 @@ func (s *WalletService) Amount(id uuid.UUID) (int, error) {
 	return wallet.Balance, nil
 }
 
-func (s *WalletService) Operation(id uuid.UUID, operationType enums.OperationType, amount int) (*models.Wallet, error) {
-
-	wallet, err := s.repo.Get(id)
-	if err != nil {
-		return nil, err
+func (s *WalletService) Operation(id uuid.UUID, op enums.OperationType, amount int) (*models.Wallet, error) {
+	if amount <= 0 {
+		return nil, errors.New("Amount must be positive")
 	}
 
-	switch operationType {
-	case enums.DEPOSIT:
-		wallet.Balance += amount
-	case enums.WITHDRAW:
-		if wallet.Balance < amount {
-			return nil, errors.New("Insufficient funds")
+	return s.repo.OperateAtomic(id, func(w *models.Wallet) error {
+		switch op {
+		case enums.DEPOSIT:
+			w.Balance += amount
+		case enums.WITHDRAW:
+			if w.Balance < amount {
+				return errors.New("Insufficient funds")
+			}
+			w.Balance -= amount
+		default:
+			return errors.New("Error")
 		}
-		wallet.Balance -= amount
-	default:
-		return nil, errors.New("Error")
-	}
-
-	s.repo.Update(wallet)
-
-	return wallet, nil
+		return nil
+	})
 }
 
 func (s *WalletService) AllWallets() (*[]models.Wallet, error) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type WalletRepository interface {
@@ -14,6 +15,7 @@ type WalletRepository interface {
 	Get(id uuid.UUID) (*models.Wallet, error)
 
 	AllWallets() (*[]models.Wallet, error)
+	OperateAtomic(id uuid.UUID, fn func(w *models.Wallet) error) (*models.Wallet, error)
 }
 
 type WalletGORMRepository struct {
@@ -49,6 +51,30 @@ func (r *WalletGORMRepository) Get(id uuid.UUID) (*models.Wallet, error) {
 	}
 
 	return &wallet, nil
+}
+
+func (r *WalletGORMRepository) OperateAtomic(id uuid.UUID, fn func(w *models.Wallet) error) (*models.Wallet, error) {
+	var result *models.Wallet
+	err := r.DB.Transaction(func(tx *gorm.DB) error {
+		var w models.Wallet
+
+		if err := tx.
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&w, "id = ?", id).Error; err != nil {
+			return err
+		}
+
+		if err := fn(&w); err != nil {
+			return err
+		}
+
+		if err := tx.Save(&w).Error; err != nil {
+			return err
+		}
+		result = &w
+		return nil
+	})
+	return result, err
 }
 
 func (r *WalletGORMRepository) AllWallets() (*[]models.Wallet, error) {

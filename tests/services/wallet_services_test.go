@@ -12,11 +12,12 @@ import (
 )
 
 type mockWalletRepo struct {
-	createFn     func() (models.Wallet, error)
-	updateFn     func(*models.Wallet) (*models.Wallet, error)
-	deleteFn     func(id uuid.UUID) error
-	getFn        func(id uuid.UUID) (*models.Wallet, error)
-	allWalletsFn func() (*[]models.Wallet, error)
+	createFn        func() (models.Wallet, error)
+	updateFn        func(*models.Wallet) (*models.Wallet, error)
+	deleteFn        func(id uuid.UUID) error
+	getFn           func(id uuid.UUID) (*models.Wallet, error)
+	allWalletsFn    func() (*[]models.Wallet, error)
+	operateAtomicFn func(id uuid.UUID, fn func(*models.Wallet) error) (*models.Wallet, error)
 }
 
 func (m *mockWalletRepo) Create() (models.Wallet, error) {
@@ -30,6 +31,9 @@ func (m *mockWalletRepo) Delete(id uuid.UUID) error {
 }
 func (m *mockWalletRepo) Get(id uuid.UUID) (*models.Wallet, error) {
 	return m.getFn(id)
+}
+func (m *mockWalletRepo) OperateAtomic(id uuid.UUID, fn func(*models.Wallet) error) (*models.Wallet, error) {
+	return m.operateAtomicFn(id, fn)
 }
 func (m *mockWalletRepo) AllWallets() (*[]models.Wallet, error) {
 	return m.allWalletsFn()
@@ -66,72 +70,82 @@ func TestWalletService_Amount(t *testing.T) {
 
 func TestWalletService_Operation_Deposit(t *testing.T) {
 	id := uuid.New()
+
 	mockRepo := &mockWalletRepo{
-		getFn: func(got uuid.UUID) (*models.Wallet, error) {
+		operateAtomicFn: func(got uuid.UUID, fn func(*models.Wallet) error) (*models.Wallet, error) {
 			assert.Equal(t, id, got)
-			return &models.Wallet{ID: id, Balance: 100}, nil
-		},
-		updateFn: func(w *models.Wallet) (*models.Wallet, error) {
+			w := &models.Wallet{ID: id, Balance: 100}
+			if err := fn(w); err != nil {
+				return nil, err
+			}
 			return w, nil
 		},
 	}
-	service := services.New(mockRepo)
+	svc := services.New(mockRepo)
 
-	w, err := service.Operation(id, enums.DEPOSIT, 50)
+	w, err := svc.Operation(id, enums.DEPOSIT, 50)
 	assert.NoError(t, err)
 	assert.Equal(t, 150, w.Balance)
+	assert.Equal(t, id, w.ID)
 }
 
 func TestWalletService_Operation_Withdraw_Success(t *testing.T) {
 	id := uuid.New()
+
 	mockRepo := &mockWalletRepo{
-		getFn: func(got uuid.UUID) (*models.Wallet, error) {
+		operateAtomicFn: func(got uuid.UUID, fn func(*models.Wallet) error) (*models.Wallet, error) {
 			assert.Equal(t, id, got)
-			return &models.Wallet{ID: id, Balance: 100}, nil
-		},
-		updateFn: func(w *models.Wallet) (*models.Wallet, error) {
+			w := &models.Wallet{ID: id, Balance: 100}
+			if err := fn(w); err != nil {
+				return nil, err
+			}
 			return w, nil
 		},
 	}
-	service := services.New(mockRepo)
+	svc := services.New(mockRepo)
 
-	w, err := service.Operation(id, enums.WITHDRAW, 50)
+	w, err := svc.Operation(id, enums.WITHDRAW, 50)
 	assert.NoError(t, err)
 	assert.Equal(t, 50, w.Balance)
+	assert.Equal(t, id, w.ID)
 }
 
 func TestWalletService_Operation_Withdraw_InsufficientFunds(t *testing.T) {
 	id := uuid.New()
+
 	mockRepo := &mockWalletRepo{
-		getFn: func(got uuid.UUID) (*models.Wallet, error) {
+		operateAtomicFn: func(got uuid.UUID, fn func(*models.Wallet) error) (*models.Wallet, error) {
 			assert.Equal(t, id, got)
-			return &models.Wallet{ID: id, Balance: 30}, nil
-		},
-		updateFn: func(w *models.Wallet) (*models.Wallet, error) {
+			w := &models.Wallet{ID: id, Balance: 30}
+			if err := fn(w); err != nil {
+				return nil, err
+			}
 			return w, nil
 		},
 	}
-	service := services.New(mockRepo)
+	svc := services.New(mockRepo)
 
-	w, err := service.Operation(id, enums.WITHDRAW, 50)
+	w, err := svc.Operation(id, enums.WITHDRAW, 50)
 	assert.Nil(t, w)
 	assert.EqualError(t, err, "Insufficient funds")
 }
 
 func TestWalletService_Operation_InvalidType(t *testing.T) {
 	id := uuid.New()
+
 	mockRepo := &mockWalletRepo{
-		getFn: func(got uuid.UUID) (*models.Wallet, error) {
+		operateAtomicFn: func(got uuid.UUID, fn func(*models.Wallet) error) (*models.Wallet, error) {
 			assert.Equal(t, id, got)
-			return &models.Wallet{ID: id, Balance: 100}, nil
-		},
-		updateFn: func(w *models.Wallet) (*models.Wallet, error) {
+			w := &models.Wallet{ID: id, Balance: 100}
+			if err := fn(w); err != nil {
+				return nil, err
+			}
 			return w, nil
 		},
 	}
-	service := services.New(mockRepo)
+	svc := services.New(mockRepo)
 
-	w, err := service.Operation(id, "HELLO", 10)
+	w, err := svc.Operation(id, "HELLO", 10)
 	assert.Nil(t, w)
 	assert.EqualError(t, err, "Error")
 }
