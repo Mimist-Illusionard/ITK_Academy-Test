@@ -4,6 +4,7 @@ Solution for the test task of the ITK Academy company
 This project consists of two components:
 
 backend — the Go-based API server
+
 postgres — a PostgreSQL database
 
 Make sure you have the following installed:
