@@ -24,6 +24,16 @@ func main() {
 		log.Fatal("Failed to connect to database: ", err)
 	}
 
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatal("failed to get sql.DB: %w", err)
+	}
+
+	sqlDB.SetMaxOpenConns(postgresConfig.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(postgresConfig.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(postgresConfig.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(postgresConfig.ConnMaxIdleTime)
+
 	err = db.AutoMigrate(
 		&models.Wallet{},
 	)

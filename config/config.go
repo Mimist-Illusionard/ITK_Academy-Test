@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -13,11 +15,15 @@ type DatabaseConfig interface {
 }
 
 type PostgresConfig struct {
-	Host         string
-	Port         string
-	User         string
-	Password     string
-	DatabaseName string
+	Host            string
+	Port            string
+	User            string
+	Password        string
+	DatabaseName    string
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
 }
 
 func (*PostgresConfig) Load() PostgresConfig {
@@ -27,11 +33,15 @@ func (*PostgresConfig) Load() PostgresConfig {
 	}
 
 	return PostgresConfig{
-		Host:         getEnv("DB_HOST"),
-		Port:         getEnv("DB_PORT"),
-		User:         getEnv("DB_USER"),
-		Password:     getEnv("DB_PASSWORD"),
-		DatabaseName: getEnv("DB_NAME"),
+		Host:            getEnv("DB_HOST"),
+		Port:            getEnv("DB_PORT"),
+		User:            getEnv("DB_USER"),
+		Password:        getEnv("DB_PASSWORD"),
+		DatabaseName:    getEnv("DB_NAME"),
+		MaxOpenConns:    getEnvAsInt("DB_MAX_OPEN_CONNS"),
+		MaxIdleConns:    getEnvAsInt("DB_MAX_IDLE_CONNS"),
+		ConnMaxLifetime: time.Duration(getEnvAsInt("DB_CONN_MAX_LIFETIME")) * time.Second,
+		ConnMaxIdleTime: time.Duration(getEnvAsInt("DB_CONN_MAX_IDLE_TIME")) * time.Second,
 	}
 }
 
@@ -41,6 +51,14 @@ func getEnv(key string) string {
 	}
 
 	return ""
+}
+
+func getEnvAsInt(key string) int {
+	valueStr := getEnv(key)
+	if value, err := strconv.Atoi(valueStr); err == nil {
+		return value
+	}
+	return 0
 }
 
 func (c *PostgresConfig) Print() string {

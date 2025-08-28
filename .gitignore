@@ -27,6 +27,8 @@ go.work.sum
 # env file
 .env
 
+*/tmp_embedded_pg
+
 # Editor/IDE
 # .idea/
 # .vscode/
